@@ -8,6 +8,8 @@ import Food from '../../components/Food';
 import ModalAddFood from '../../components/ModalAddFood';
 import ModalEditFood from '../../components/ModalEditFood';
 
+import defineMaxId from '../../utils/defineMaxId';
+
 import { FoodsContainer } from './styles';
 
 interface IFoodPlate {
@@ -27,7 +29,8 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     async function loadFoods(): Promise<void> {
-      // TODO LOAD FOODS
+      const response = await api.get('/foods');
+      setFoods(response.data);
     }
 
     loadFoods();
@@ -37,7 +40,11 @@ const Dashboard: React.FC = () => {
     food: Omit<IFoodPlate, 'id' | 'available'>,
   ): Promise<void> {
     try {
-      // TODO ADD A NEW FOOD PLATE TO THE API
+      const newId = defineMaxId(foods);
+
+      const newFood = Object.assign(food, { available: true, id: newId });
+
+      setFoods([...foods, newFood]);
     } catch (err) {
       console.log(err);
     }
@@ -46,11 +53,24 @@ const Dashboard: React.FC = () => {
   async function handleUpdateFood(
     food: Omit<IFoodPlate, 'id' | 'available'>,
   ): Promise<void> {
-    // TODO UPDATE A FOOD PLATE ON THE API
+    const filterFoods = foods.filter(food => food.id !== editingFood.id);
+
+    const updatedFood = Object.assign(food, {
+      available: editingFood.available,
+      id: editingFood.id,
+    });
+
+    setFoods(
+      [...filterFoods, updatedFood].sort((foodA, foodB) => {
+        const value = foodA.id > foodB.id ? 1 : -1;
+        return value;
+      }),
+    );
   }
 
   async function handleDeleteFood(id: number): Promise<void> {
-    // TODO DELETE A FOOD PLATE FROM THE API
+    const filterFoods = foods.filter(food => food.id !== id);
+    setFoods(filterFoods);
   }
 
   function toggleModal(): void {
@@ -62,7 +82,8 @@ const Dashboard: React.FC = () => {
   }
 
   function handleEditFood(food: IFoodPlate): void {
-    // TODO SET THE CURRENT EDITING FOOD ID IN THE STATE
+    setEditingFood(food);
+    toggleEditModal();
   }
 
   return (
